@@ -19,6 +19,7 @@
   <depend>rclcpp_components</depend>
   <depend>pluginlib</depend>
   <depend>moveit_hybrid_planning</depend>
+  <depend>processit_tasks</depend>
 
   <exec_depend>moveit_servo</exec_depend>
   <exec_depend>launch</exec_depend>

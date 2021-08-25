@@ -9,7 +9,7 @@
 #include <moveit/task_constructor/stages/generate_place_pose.h>
 #include <moveit/task_constructor/stages/modify_planning_scene.h>
 #include <moveit/task_constructor/stages/move_relative.h>
-#include <moveit/task_constructor/stages/move_to.h>
+#include <moveit/task_constructor/stages/move_to_task_frame.h>
 #include <moveit/task_constructor/stages/predicate_filter.h>
 #include <moveit/task_constructor/solvers/cartesian_path.h>
 #include <moveit/task_constructor/solvers/pipeline_planner.h>
@@ -74,17 +74,45 @@ GlobalMTCPlannerComponent::plan(const moveit_msgs::msg::MotionPlanRequest& plann
    *****************************************************/
   // Move to joint state constraints specified in goal request
   // NOTE: this assumes only joint constraints are specified
-  // {
-  //   auto stage = std::make_unique<stages::MoveTo>("move to goal", sampling_planner);
-  //   stage->setGroup("ur_manipulator");
-  //   std::map<std::string, double> goal_state;
-  //   for (const auto& jc : planning_problem.goal_constraints[0].joint_constraints)
-  //   {
-  //     goal_state[jc.joint_name] = jc.position;
-  //   }
-  //   stage->setGoal(goal_state);
-  //   t.add(std::move(stage));
-  // }
+  {
+    auto stage = std::make_unique<stages::MoveTo>("move to goal", sampling_planner);
+    stage->setGroup("ur_manipulator");
+    std::map<std::string, double> goal_state;
+    for (const auto& jc : planning_problem.goal_constraints[0].joint_constraints)
+    {
+      goal_state[jc.joint_name] = jc.position;
+    }
+    stage->setGoal(goal_state);
+    t.add(std::move(stage));
+  }
+
+  /******************************************************
+   *          Move to start (welding) task frame            *
+   *****************************************************/
+  {
+    auto stage = std::make_unique<stages::MoveToTaskFrame>("Move to start welding", sampling_planner);
+    // stage->properties().configureInitFrom(Stage::PARENT, { "group" });
+    stage->setIKFrame("tcp_welding_gun_link");
+    stage->properties().set("marker_ns", "retreat");
+    int feature_id = 1;
+    bool reverse_direction = false;
+    stage->startState(feature_id, reverse_direction);
+    t.add(std::move(stage));
+  }
+
+  /******************************************************
+   *          Move to end (welding) task frame            *
+   *****************************************************/
+  {
+    auto stage = std::make_unique<stages::MoveToTaskFrame>("Move to end welding", sampling_planner);
+    // stage->properties().configureInitFrom(Stage::PARENT, { "group" });
+    stage->setIKFrame("tcp_welding_gun_link");
+    stage->properties().set("marker_ns", "retreat");
+    int feature_id = 1;
+    bool reverse_direction = false;
+    stage->setTask(feature_id, reverse_direction);
+    t.add(std::move(stage));
+  }
 
   /******************************************************
    *          Relative Motion                           *

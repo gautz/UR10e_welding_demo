@@ -9,6 +9,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(processit_tasks REQUIRED)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   moveit_hybrid_planning
@@ -18,6 +19,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
   rclcpp_action
   rclcpp_components
+  processit_tasks
 )
 
 include_directories(include)
