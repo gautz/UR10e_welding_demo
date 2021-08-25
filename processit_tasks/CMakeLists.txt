@@ -24,6 +24,8 @@ find_package(rosparam_shortcuts REQUIRED)
 find_package(moveit_task_constructor_core REQUIRED)
 find_package(moveit_task_constructor_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(processit_msgs REQUIRED)
+find_package(processit_cax REQUIRED)
 
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
@@ -33,11 +35,24 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   moveit_task_constructor_core
   moveit_task_constructor_msgs
   tf2_geometry_msgs
+  processit_msgs
+  processit_cax
 )
+
+# catkin_package(
+# 	INCLUDE_DIRS include
+# 	LIBRARIES mtc_task_frame
+# 	DEPENDS YAML_CPP
+# )
 
 include_directories(
   include
 )
+
+add_library(mtc_task_frame SHARED src/move_to_task_frame.cpp)
+# add_dependencies(mtc_task_frame ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(mtc_task_frame ${catkin_LIBRARIES})
+# target_compile_definitions(mtc_task_frame PRIVATE -DMOVEIT_CARTESIAN_INTERPOLATOR=${MOVEIT_CARTESIAN_INTERPOLATOR})
 
 add_library(processit_tasks SHARED
   src/cartesian_task.cpp
