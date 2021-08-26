@@ -39,25 +39,33 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   processit_cax
 )
 
-# catkin_package(
-# 	INCLUDE_DIRS include
-# 	LIBRARIES mtc_task_frame
-# 	DEPENDS YAML_CPP
-# )
+include_directories(include)
 
-include_directories(
-  include
-)
-
-add_library(mtc_task_frame SHARED src/move_to_task_frame.cpp)
-# add_dependencies(mtc_task_frame ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(mtc_task_frame ${catkin_LIBRARIES})
-# target_compile_definitions(mtc_task_frame PRIVATE -DMOVEIT_CARTESIAN_INTERPOLATOR=${MOVEIT_CARTESIAN_INTERPOLATOR})
-
-add_library(processit_tasks SHARED
-  src/cartesian_task.cpp
-)
+add_library(processit_tasks SHARED src/cartesian_task.cpp)
 ament_target_dependencies(processit_tasks ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+add_library(mtc_task_frame SHARED src/move_to_task_frame.cpp)
+set_target_properties(mtc_task_frame PROPERTIES VERSION "${${PROJECT_NAME}_VERSION}")
+ament_target_dependencies(mtc_task_frame ${THIS_PACKAGE_INCLUDE_DEPENDS})
+# rclcpp_components_register_nodes(mtc_task_frame "MoveIt::TaskConstructor::Stages::MoveToTaskFrame")
+
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  TARGETS
+    mtc_task_frame
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+ament_export_libraries(
+  mtc_task_frame
+  )
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
 ament_package()
