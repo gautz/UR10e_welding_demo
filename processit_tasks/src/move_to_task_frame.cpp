@@ -4,7 +4,8 @@
 // #include <tf2_ros/transform_listener.h>
 
 #include <moveit/task_constructor/stages/move_to_task_frame.h>
-#include <processit_cax/plugin_task_description.h>
+// #include <processit_cax/plugin_task_description.h>
+#include <tf2_eigen/tf2_eigen.h>
 
 namespace moveit
 {
@@ -15,47 +16,39 @@ namespace stages
 // namespace processit_tasks
 // {
 
-// bool MoveToTaskFrame::getCurrentWorkpieceFrame(const std::string& feature_frame)
-// {
-//   // std::string workpiece_frame;
-//   bool parent_exists;
-//   try
-//   {
-//     tf2_ros::Buffer tfBuffer;
-//     tf2_ros::TransformListener tfListener(tfBuffer);
-//     // Get the workpiece on which the feature is located
-//     // parent_exists = tfBuffer._getParent(feature_frame, ros::Time::now(), workpiece_frame_);
-//   }
-//   catch (tf2::TransformException& ex)
-//   {
-//     // If no workpiece frame is available, do not change frames.
-//     RCLCPP_WARN_STREAM(LOGGER, "Exception while getting parent of:" << feature_frame);
-//   }
-//   return parent_exists;
-// }
-
-// geometry_msgs::TransformStamped MoveToTaskFrame::getFeatureToTaskTransform(const std::string& feature_to_task_frame)
-// {
-//   geometry_msgs::TransformStamped feature_to_task_transform_stamped;
-//   try
-//   {
-//     tf2_ros::Buffer tfBuffer;
-//     tf2_ros::TransformListener tfListener(tfBuffer);
-//     // Load the  feature_to_task_frame transform from the TF frame, child of the workpiece frame
-//     feature_to_task_transform_stamped = tfBuffer.lookupTransform(
-//         workpiece_frame_, feature_to_task_frame, ros::Time::now(), ros::Duration(3.0));  // ros::Time(0),
-//   }
-//   catch (tf2::TransformException& ex)
-//   {
-//     // If no workpiece frame is available, do not change frames.
-//     RCLCPP_WARN_STREAM(LOGGER, "Exception while looking up feature_to_task_transform:" << feature_to_task_frame);
-//   }
-//   return feature_to_task_transform_stamped;
-// }
-
 // processit_msgs::WeldSeam[]
 void MoveToTaskFrame::getFeatures()
 {
+  std::string workpiece_path = "";
+  node_->get_parameter("workpiece_path", workpiece_path);
+
+  // TODO currently only hardcoded pose
+  Eigen::Isometry3d workpiece_pose = Eigen::Isometry3d::Identity();
+  workpiece_pose.translation().x() = 0.1;
+  workpiece_pose.translation().y() = -0.2;
+  workpiece_pose.translation().z() = 0.71;
+
+  // Service call to load a task description
+  rclcpp::Client<processit_msgs::srv::LoadTaskDescription>::SharedPtr client =
+      node_->create_client<processit_msgs::srv::LoadTaskDescription>("plugin_task_description/load_task_description");
+  auto request = std::make_shared<processit_msgs::srv::LoadTaskDescription::Request>();
+
+  // Set task description filename
+  std::string task_file = workpiece_path + ".xml";
+  RCLCPP_INFO(LOGGER, "Loading task " + task_file);
+  request->task_description_file = task_file;
+
+  // Set workpiece pose (task description is relative to workpiece frame)
+  geometry_msgs::msg::PoseStamped workpiece_pose_stamped;
+  workpiece_pose_stamped.header.frame_id = "world";
+  workpiece_pose_stamped.pose = tf2::toMsg(workpiece_pose);
+  request->workpiece_pose = workpiece_pose_stamped;
+
+  while (!client->wait_for_service(1s))
+  {
+    RCLCPP_INFO(LOGGER, "service not available, waiting again...");
+  }
+
   processit_msgs::srv::LoadTaskDescription::Response::SharedPtr response;
   auto result = client->async_send_request(request);
   response = result.get();
@@ -65,7 +58,7 @@ void MoveToTaskFrame::getFeatures()
   // return response->weld_seams
 }
 
-geometry_msgs::Pose[] MoveToTaskFrame::getTaskFrames(int feature_id)
+processit_msgs::msg::WeldSeam MoveToTaskFrame::getTaskFrames(int feature_id)
 {
   return current_features_[feature_id];
 }
@@ -80,60 +73,19 @@ geometry_msgs::Pose[] MoveToTaskFrame::getTaskFrames(int feature_id)
 // 	return task_frame;
 // }
 
-// /// Get pose of task frame with specified TF Feature frame name and TF FeatureToTask frame name from technology model
-// /// and additional offsets for e.g. approach/retrieve
-// geometry_msgs::PoseStamped MoveToTaskFrame::getTaskFrame(const std::string& feature_frame,
-//                                                          const std::string& feature_to_task_frame,
-//                                                          const geometry_msgs::Transform offset_transform)
-// {
-//   geometry_msgs::TransformStamped task_transform_stamped;
-//   task_transform_stamped = getFeatureToTaskTransform(feature_to_task_frame);
-//   geometry_msgs::PoseStamped task_frame =
-//       MoveToTaskFrame::getTaskFrame(feature_frame, task_transform_stamped.transform, offset_transform);
-//   return task_frame;
-// }
-
-// /// Get pose of task frame with specified TF Feature frame name and FeatureToTask transformation and additional offsets
-// /// for e.g. approach/retrieve
-// geometry_msgs::PoseStamped MoveToTaskFrame::getTaskFrame(const std::string& feature_frame,
-//                                                          const geometry_msgs::Transform feature_to_task_transform,
-//                                                          const geometry_msgs::Transform offset_transform)
-// {
-//   geometry_msgs::PoseStamped task_frame;
-//   try
-//   {
-//     tf2_ros::Buffer tfBuffer;
-//     tf2_ros::TransformListener tfListener(tfBuffer);
-//     task_frame.header.frame_id = feature_frame;
-//     // Standard welding gun orientation and stickout from the technology model
-//     task_frame.pose.position.x = feature_to_task_transform.translation.x + offset_transform.translation.x;
-//     task_frame.pose.position.y = feature_to_task_transform.translation.y + offset_transform.translation.y;
-//     task_frame.pose.position.z = feature_to_task_transform.translation.z + offset_transform.translation.z;
-//     task_frame.pose.orientation =
-//         feature_to_task_transform.rotation;  // TODO implement composition of rotations + offset_transform.rotation
-//     task_frame = tfBuffer.transform(task_frame, world_frame_, ros::Duration(3.0));
-//   }
-//   catch (tf2::TransformException& ex)
-//   {
-//     // If no workpiece frame is available, do not change frames.
-//     RCLCPP_WARN_STREAM(LOGGER, "Exception while getting task frame:" << feature_frame);
-//   }
-//   return task_frame;
-// }
-
 void MoveToTaskFrame::startState(int feature_id, bool reverse_direction)
 {
   getFeatures();
-  geometry_msgs::Pose[] task_frames = getTaskFrames(feature_id);
+  processit_msgs::msg::WeldSeam task_frames = getTaskFrames(feature_id);
 
   if (!reverse_direction)
   {
-    start_frame_.pose = task_frames[0];
+    start_frame_.pose = task_frames.poses[0];
     setProperty("goal", start_frame_);
   }
   else
   {
-    end_frame_.pose = task_frames[1];
+    end_frame_.pose = task_frames.poses[1];
     setProperty("goal", end_frame_);
   }
 }
@@ -141,125 +93,39 @@ void MoveToTaskFrame::startState(int feature_id, bool reverse_direction)
 void MoveToTaskFrame::setTask(int feature_id, bool reverse_direction)
 {
   getFeatures();
-  geometry_msgs::Pose[] task_frames = getTaskFrames(feature_id);
+  processit_msgs::msg::WeldSeam task_frames = getTaskFrames(feature_id);
 
   if (!reverse_direction)
   {
-    start_frame_.pose = task_frames[0];
-    end_frame_.pose = task_frames[1];
+    start_frame_.pose = task_frames.poses[0];
+    end_frame_.pose = task_frames.poses[1];
     setProperty("goal", end_frame_);
   }
   else
   {
-    start_frame_.pose = task_frames[1];
-    end_frame_.pose = task_frames[0];
+    start_frame_.pose = task_frames.poses[1];
+    end_frame_.pose = task_frames.poses[0];
     setProperty("goal", start_frame_);
   }
   // Linear Feature
-  if (task_frames.size() == 2)
+  if (task_frames.poses.size() == 2)
   {
     if (planner_plugin == "ompl_interface/OMPLPlanner")
     {
-      setLinConstraints()
+      setLinConstraints();
     }
   }
   // Circular Feature
-  else if (task_frames.size() == 3)
+  else if (task_frames.poses.size() == 3)
     // Spline Feature
-    else if (task_frames.size() > 3)
+    else if (task_frames.poses.size() > 3)
 }
-
-// /// Set end Pose of task as next MoveIt goal with specified TF Feature frame name and FeatureToTask Frame from
-// /// technology model and additional offsets for e.g. approach/retrieve
-// void MoveToTaskFrame::setTaskEnd(const std::string& feature_frame, const std::string& feature_to_task_frame,
-//                                  const geometry_msgs::Transform offset_transform)
-// {
-//   end_frame_ = getTaskFrame(feature_frame, feature_to_task_frame, offset_transform);
-//   setProperty("goal", end_frame_);
-// }
-
-// /// Set end Pose of task as next MoveIt goal with specified TF Feature frame name and FeatureToTask transformation
-// void MoveToTaskFrame::setTaskEnd(const std::string& feature_frame,
-//                                  const geometry_msgs::Transform feature_to_task_transform)
-// {
-//   identity_transform_.translation.x = 0;
-//   identity_transform_.translation.y = 0;
-//   identity_transform_.translation.z = 0;
-//   identity_transform_.rotation.x = 0;
-//   identity_transform_.rotation.y = 0;
-//   identity_transform_.rotation.z = 0;
-//   identity_transform_.rotation.z = 1;
-//   end_frame_ = getTaskFrame(feature_frame, feature_to_task_transform, identity_transform_);
-//   setProperty("goal", end_frame_);
-// }
-
-// /// Set start Pose of task as next MoveIt goal with specified TF Feature frame name and FeatureToTask Frame from
-// /// technology model and additional offsets for e.g. approach/retrieve
-// void MoveToTaskFrame::setTaskStart(const std::string& feature_frame, const std::string& feature_to_task_frame,
-//                                    const geometry_msgs::Transform offset_transform)
-// {
-//   std::string start_frame = feature_frame;
-//   eraseSubStr(start_frame, "start");
-//   eraseSubStr(start_frame, "center");
-//   eraseSubStr(start_frame, "end");
-//   start_frame += "start";
-//   start_frame_ = getTaskFrame(start_frame, feature_to_task_frame, offset_transform);
-// }
-
-// /// Set start Pose of task as next MoveIt goal with specified TF Feature frame name and FeatureToTask transformation
-// void MoveToTaskFrame::setTaskStart(const std::string& feature_frame,
-//                                    const geometry_msgs::Transform feature_to_task_transform)
-// {
-//   identity_transform_.translation.x = 0;
-//   identity_transform_.translation.y = 0;
-//   identity_transform_.translation.z = 0;
-//   identity_transform_.rotation.x = 0;
-//   identity_transform_.rotation.y = 0;
-//   identity_transform_.rotation.z = 0;
-//   identity_transform_.rotation.z = 1;
-//   std::string start_frame = feature_frame;
-//   eraseSubStr(start_frame, "start");
-//   eraseSubStr(start_frame, "center");
-//   eraseSubStr(start_frame, "end");
-//   start_frame += "start";
-//   start_frame_ = getTaskFrame(start_frame, feature_to_task_transform, identity_transform_);
-// }
-
-// /// Set interim Pose of task as next MoveIt goal with specified TF Feature frame name and FeatureToTask Frame from
-// /// technology model and additional offsets for e.g. approach/retrieve
-// void MoveToTaskFrame::setTaskInterim(const std::string& feature_frame, const std::string& feature_to_task_frame,
-//                                      const geometry_msgs::Transform offset_transform)
-// {
-//   std::string interim_frame = feature_frame;
-//   eraseSubStr(interim_frame, "start");
-//   eraseSubStr(interim_frame, "end");
-//   interim_frame += "center";
-//   interim_frame_ = getTaskFrame(interim_frame, feature_to_task_frame, offset_transform);
-// }
-
-// /// Set interim Pose of task as next MoveIt goal with specified TF Feature frame name and FeatureToTask
-// transformation void MoveToTaskFrame::setTaskInterim(const std::string& feature_frame,
-//                                      const geometry_msgs::Transform feature_to_task_transform)
-// {
-//   identity_transform_.translation.x = 0;
-//   identity_transform_.translation.y = 0;
-//   identity_transform_.translation.z = 0;
-//   identity_transform_.rotation.x = 0;
-//   identity_transform_.rotation.y = 0;
-//   identity_transform_.rotation.z = 0;
-//   identity_transform_.rotation.z = 1;
-//   std::string interim_frame = feature_frame;
-//   eraseSubStr(interim_frame, "start");
-//   eraseSubStr(interim_frame, "end");
-//   interim_frame += "center";
-//   interim_frame_ = getTaskFrame(interim_frame, feature_to_task_transform, identity_transform_);
-// }
 
 /// Set line constraints for OMPL Constrained Planning
 moveit_msgs::Constraints MoveToTaskFrame::setLinConstraints()
 {
-  geometry_msgs::PoseStamped start_frame = start_frame_;
-  geometry_msgs::PoseStamped goal_frame = end_frame_;
+  geometry_msgs::msg::PoseStamped start_frame = start_frame_;
+  geometry_msgs::msg::PoseStamped goal_frame = end_frame_;
   moveit_msgs::Constraints path_constraints;
   moveit_msgs::PositionConstraint pos_constraint;
 
@@ -274,7 +140,7 @@ moveit_msgs::Constraints MoveToTaskFrame::setLinConstraints()
   constraints_box.dimensions = { distance * 1.1, distance * 1.1, distance * 1.1 };
   pos_constraint.constraint_region.primitives.push_back(constraints_box);
 
-  geometry_msgs::Pose constraints_middle_frame;
+  geometry_msgs::msg::Pose constraints_middle_frame;
   constraints_middle_frame.position.x = start_frame.pose.position.x + start_goal_vector[0] / 2;
   constraints_middle_frame.position.y = start_frame.pose.position.y + start_goal_vector[1] / 2;
   constraints_middle_frame.position.z = start_frame.pose.position.z + start_goal_vector[2] / 2;
@@ -330,7 +196,7 @@ moveit_msgs::Constraints MoveToTaskFrame::setCircConstraints(const std::string& 
     constraints_box.dimensions = { distance * 1.1, distance * 1.1, distance * 1.1 };
     pos_constraint.constraint_region.primitives.push_back(constraints_box);
 
-    geometry_msgs::Pose constraints_middle_frame;
+    geometry_msgs::msg::Pose constraints_middle_frame;
     constraints_middle_frame.position.x = start_frame_.pose.position.x + start_goal_vector[0] / 2;
     constraints_middle_frame.position.y = start_frame_.pose.position.y + start_goal_vector[1] / 2;
     constraints_middle_frame.position.z = start_frame_.pose.position.z + start_goal_vector[2] / 2;
@@ -344,18 +210,6 @@ moveit_msgs::Constraints MoveToTaskFrame::setCircConstraints(const std::string& 
   RCLCPP_DEBUG(LOGGER, "Path constraints set for CIRC");
   return path_constraints;
 }
-
-// void MoveToTaskFrame::eraseSubStr(std::string& mainStr, const std::string& toErase)
-// {
-//   // Search for the substring in string
-//   size_t pos = mainStr.find(toErase);
-
-//   if (pos != std::string::npos)
-//   {
-//     // If found then erase it from string
-//     mainStr.erase(pos, toErase.length());
-//   }
-// }
 
 }  // namespace stages
 }  // namespace task_constructor
