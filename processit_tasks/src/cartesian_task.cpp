@@ -42,16 +42,16 @@ void CartesianTask::init(std::string task_name, std::string task_caption)
   node_->get_parameter<double>(PLAN_REQUEST_PARAM_NS + "max_acceleration_scaling_factor",
                                max_acceleration_scaling_factor_);
   // Load parameter & initialize member variables
-  node_->get_parameter<std::string>("arm_group_name", arm_group_name_);
-  node_->get_parameter<std::string>("welding_tcp_frame", welding_tcp_frame_);
-  node_->get_parameter<std::string>("task_control_frame", task_control_frame_);
-  node_->get_parameter<std::string>("arm_home_pose", arm_home_pose_);
-  node_->get_parameter<std::string>("workpiece_frame", workpiece_frame_);
-  node_->get_parameter<double>("welding_velocity", welding_velocity_);      // [cm/min], see velocity_convert_
-  node_->get_parameter<double>("cartesian_velocity", cartesian_velocity_);  // [m/s]
-  node_->get_parameter<double>("via_velocity", via_velocity_);              // velocity scaling factor [0.0001;1]
-  node_->get_parameter<double>("offset_welding_approach_z", offset_welding_approach_z_);
-  node_->get_parameter<double>("goal_orientation_tolerance", goal_orientation_tolerance_);
+  node_->get_parameter<std::string>(WELDING_PARAM_NS + "arm_group_name", arm_group_name_);
+  node_->get_parameter<std::string>(WELDING_PARAM_NS + "welding_tcp_frame", welding_tcp_frame_);
+  node_->get_parameter<std::string>(WELDING_PARAM_NS + "task_control_frame", task_control_frame_);
+  node_->get_parameter<std::string>(WELDING_PARAM_NS + "arm_home_pose", arm_home_pose_);
+  node_->get_parameter<std::string>(WELDING_PARAM_NS + "workpiece_frame", workpiece_frame_);
+  node_->get_parameter<double>(WELDING_PARAM_NS + "welding_velocity", welding_velocity_);      // [cm/min], see velocity_convert_
+  node_->get_parameter<double>(WELDING_PARAM_NS + "cartesian_velocity", cartesian_velocity_);  // [m/s]
+  node_->get_parameter<double>(WELDING_PARAM_NS + "via_velocity", via_velocity_);              // velocity scaling factor [0.0001;1]
+  node_->get_parameter<double>(WELDING_PARAM_NS + "offset_welding_approach_z", offset_welding_approach_z_);
+  node_->get_parameter<double>(WELDING_PARAM_NS + "goal_orientation_tolerance", goal_orientation_tolerance_);
 
   // loadParameters();
   // nh_.param<std::string>("/move_group/planning_plugin", planning_plugin_, "");

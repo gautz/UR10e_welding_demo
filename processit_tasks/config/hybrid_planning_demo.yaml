@@ -1,43 +1,44 @@
-# planner_interface configuration
-welding_velocity: 0.02 # 50 [cm/min], see velocity_convert_ in welding.h
-cartesian_velocity: 0.2 # velocity scaling factor [0.0001;1]
-via_velocity: 1.0 # velocity scaling factor [0.0001;1]
-max_acceleration_scaling: 0.1 # [rad/s²]
-step_size: 0.001
-num_planning_attempts: 1
-goal_joint_tolerance: 0.00001 # max over axes [rad]
-goal_position_tolerance_z: 0.001 # [m]
-goal_orientation_tolerance: 0.5 # [rad]
+welding_params:
+  # planner_interface configuration
+  welding_velocity: 0.02 # 50 [cm/min], see velocity_convert_ in welding.h
+  cartesian_velocity: 0.2 # velocity scaling factor [0.0001;1]
+  via_velocity: 1.0 # velocity scaling factor [0.0001;1]
+  max_acceleration_scaling: 0.1 # [rad/s²]
+  step_size: 0.001
+  num_planning_attempts: 1
+  goal_joint_tolerance: 0.00001 # max over axes [rad]
+  goal_position_tolerance_z: 0.001 # [m]
+  goal_orientation_tolerance: 0.5 # [rad]
 
-planning_time_free_space: 1
-planning_time_constrained: 5
-planning_time_collisions: 90 # not implemented yet
-# Total planning attempts
-max_solutions: 10
+  planning_time_free_space: 1
+  planning_time_constrained: 5
+  planning_time_collisions: 90 # not implemented yet
+  # Total planning attempts
+  max_solutions: 10
 
-# Planning group and link names
-arm_group_name: "ur_manipulator"
-moveit_ee_name: "endeffector" #"flange"
-welding_group_name: "welding_endeffector" # "welding_arm"
-welding_tcp_group: "welding_gun" # "welding_tcp"
-welding_tcp_frame: "tcp_welding_gun_link" # "welding_tcp"
-task_control_frame: "tcp_welding_gun_link" # "welding_tcp"
+  # Planning group and link names
+  arm_group_name: "ur_manipulator"
+  moveit_ee_name: "endeffector" #"flange"
+  welding_group_name: "welding_endeffector" # "welding_arm"
+  welding_tcp_group: "welding_gun" # "welding_tcp"
+  welding_tcp_frame: "tcp_welding_gun_link" # "welding_tcp"
+  task_control_frame: "tcp_welding_gun_link" # "welding_tcp"
 
-# Offsets for specific sub-tasks
-## Welding
-offset_welding_approach_z: 0.1 #[mm]
-offset_welding_z: 5 #22 #[mm]
-offset_welding_y: -9 #-5 #[mm]
-offset_welding_x: 2.5 #2 #-2 #3 #[mm]
-offset_welding_angle: 0 #3.5 #[deg]
-offset_welding_speed: 0 #[cm/min]
+  # Offsets for specific sub-tasks
+  ## Welding
+  offset_welding_approach_z: 0.1 #[mm]
+  offset_welding_z: 5 #22 #[mm]
+  offset_welding_y: -9 #-5 #[mm]
+  offset_welding_x: 2.5 #2 #-2 #3 #[mm]
+  offset_welding_angle: 0 #3.5 #[deg]
+  offset_welding_speed: 0 #[cm/min]
 
-# Poses
-## Robot configuration in joint space
-arm_home_pose: "ready"
-arm_interim_home_pose: "scanning_to_home"
+  # Poses
+  ## Robot configuration in joint space
+  arm_home_pose: "ready"
+  arm_interim_home_pose: "scanning_to_home"
 
-# Scene frames
-world_frame: "world"
-workpiece_frame: "workpiece"
-manufacturing_to_task_frame: "ManufacturingToTaskFrame"
+  # Scene frames
+  world_frame: "world"
+  workpiece_frame: "workpiece"
+  manufacturing_to_task_frame: "ManufacturingToTaskFrame"
