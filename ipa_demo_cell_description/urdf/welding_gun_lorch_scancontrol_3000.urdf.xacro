@@ -3,7 +3,7 @@
      Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot xmlns:xacro="http://wiki.ros.org/xacro">
-  <xacro:macro name="endeffector" params="prefix">
+  <xacro:macro name="endeffector" params="tf_prefix">
     <link name="welding_gun_link">
       <inertial>
         <origin xyz="-0.063966723890025 0.0507342971013102 -0.279018970359549" rpy="0 0 0" />

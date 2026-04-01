@@ -3,7 +3,7 @@
      Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot xmlns:xacro="http://wiki.ros.org/xacro">
-  <xacro:macro name="ipa_demo_env" params="prefix">
+  <xacro:macro name="ipa_demo_env" params="tf_prefix">
     <link name="env_link">
       <inertial>
         <origin xyz="-0.0710821713973007 1.04952300655296E-15 0.586534037453751" rpy="0 0 0" />

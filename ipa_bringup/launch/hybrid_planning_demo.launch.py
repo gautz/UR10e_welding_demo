@@ -125,7 +125,7 @@ def generate_launch_description():
     )
     declared_arguments.append(
         DeclareLaunchArgument(
-            "prefix",
+            "tf_prefix",
             default_value='""',
             description="Prefix of the joint names, useful for \
         multi-robot setup. If changed than also joint names in the controllers' configuration \
@@ -192,7 +192,7 @@ def generate_launch_description():
     description_file = LaunchConfiguration("description_file")
     moveit_config_package = LaunchConfiguration("moveit_config_package")
     moveit_config_file = LaunchConfiguration("moveit_config_file")
-    prefix = LaunchConfiguration("prefix")
+    tf_prefix = LaunchConfiguration("tf_prefix")
     use_fake_hardware = LaunchConfiguration("use_fake_hardware")
     fake_sensor_commands = LaunchConfiguration("fake_sensor_commands")
     robot_controller = LaunchConfiguration("robot_controller")
@@ -283,8 +283,8 @@ def generate_launch_description():
             "output_recipe_filename:=",
             output_recipe_filename,
             " ",
-            "prefix:=",
-            prefix,
+            "tf_prefix:=",
+            tf_prefix,
             " ",
             "use_fake_hardware:=",
             use_fake_hardware,
@@ -321,8 +321,8 @@ def generate_launch_description():
             # configs has to be updated!
             "ur",
             " ",
-            "prefix:=",
-            prefix,
+            "tf_prefix:=",
+            tf_prefix,
             " ",
         ]
     )
@@ -597,7 +597,7 @@ def generate_launch_description():
         executable="hybrid_planning_test_node",
         name="hybrid_planning_test_node",
         output="screen",
-        # prefix=["xterm -e gdb -ex run --args"],
+        # tf_prefix=["xterm -e gdb -ex run --args"],
         parameters=[robot_description, robot_description_semantic, kinematics_yaml],
     )
 
@@ -610,7 +610,7 @@ def generate_launch_description():
     #     executable="moveit_publish_scene_from_text",
     #     output="screen",
     #     # TODO Look for a better solution to wait on planning scene?
-    #     prefix="bash -c 'sleep 10; $0 $@'",
+    #     tf_prefix="bash -c 'sleep 10; $0 $@'",
     #     arguments=["--scene", scene_file_param],
     #     parameters=[
     #         robot_description,
